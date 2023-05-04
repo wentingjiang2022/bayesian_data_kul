@@ -1,0 +1,139 @@
+---
+title: "Bayesian software"
+output: html_document
+date: "2023-05-01"
+---
+
+Based on slides: https://drive.google.com/drive/folders/1Gw4xOqK1vijalFvP-WWJP030NIyt3nKz
+But data are simulaetd
+Step 1: install and load the packages
+
+```{r}
+
+#install.packages("R2OpenBUGS")
+#install.packages("coda")
+#install.packages("readr")
+#install.packages("nimble")
+
+library("R2OpenBUGS")
+library("coda")
+library("readr")
+library("nimble")
+```
+
+
+
+Step 4: write the BUGS model
+
+```{r}
+# Specify the model in nimble code
+code <- nimbleCode({
+  beta0 ~ dnorm(0, 1e-6)
+  beta1 ~ dnorm(0, 1e-6)
+  tau ~ dgamma(1, 1)
+  for (i in 1:length(x)) {
+    y[i] ~ dnorm(beta0 + beta1 * x[i], tau)
+  }
+})
+
+```
+
+Step 5: Prepare the data and collect them into the object ‘mydata’ and
+‘my.constants’
+
+```{r}
+
+# Generate some sample data
+set.seed(123)
+x <- rnorm(100, mean = 5, sd = 2)
+y <- rnorm(100, mean = 2 + 0.5 * x, sd = 1)
+# Load your data into R and format it as needed
+my.data <- list(x = x, y = y)
+my.constants <- list()
+my.inits <- list(beta0 = 0, beta1 = 0, tau = 1)
+
+```
+
+Skip Step 6 in her slides:
+▷ Step 6: Prepare the initial values for 3 chains, we show two ways:
+# One way: give the values explicitly for each chain
+> inits <- list(
++ list(beta0=0.4,beta1=0.025,tau=1/0.05),
++ list(beta0=0.4,beta1=0.055,tau=1/0.05),
++ list(beta0=0.4,beta1=0.025,tau=1/0.12))
+# Other way: generate them randomly
+> inits <- function()(list(beta0=rnorm(1,0.4,1),
++ beta1=rnorm(1), tau=runif(1,0.5,1)))
+
+Step 7: Collect the parameters to monitor into one vector
+
+```{r}
+parameters <- c("beta0", "beta1", "tau")
+
+```
+
+
+Step 8: Run the MCMC chain
+
+```{r}
+# Create a nimble model object
+model <- nimbleModel(code, data = my.data, constants = my.constants, inits = my.inits)
+
+
+# Create a nimble model object
+model <- nimbleModel(code, data = list(x = x, y = y))
+
+# Compile the model
+compiled_model <- compileNimble(model)
+
+# Sample from the posterior distribution
+osteo.sim <- nimbleMCMC(code = compiled_model,
+                        monitors = parameters,
+                        niter = 1500,
+                        nburnin = 750,
+                        nchains = 3,
+                        thin = 1,
+                        samplesAsCodaMCMC = TRUE)
+
+# Summarize the posterior distribution
+print(summary(osteo.sim))
+
+
+```
+
+Step 9: Produce general summary of obtained MCMC sampling
+
+```{r}
+print(osteo.sim)
+plot(osteo.sim)
+```
+Step 10: Convert osteo.sim into mcmc.list for processing with CODA
+
+```{r}
+osteo.mcmc <- as.mcmc.list(osteo.sim)
+```
+
+Step 11: Produce general summary of obtained MCMC sampling
+
+```{r}
+plot(osteo.mcmc)
+summary(osteo.mcmc)
+```
+
+Skip Step 12-13 in her slides:
+
+▷ Step 12: Specific output obtained from CODA functions
+> par(mfrow=c(2,2)) # plot figures in 2x2 format if function allows
+> traceplot(osteo.mcmc) # trace plots
+> cumuplot(osteo.mcmc,ask=FALSE) # running mean plots
+> acfplot(osteo.mcmc) # autocorrelation function plot
+> autocorr(osteo.mcmc) # autocorrelation values
+> crosscorr.plot(osteo.mcmc) # cross-correlation output
+> densplot(osteo.mcmc) # density plots of the marginal posteriors
+> effectiveSize(osteo.mcmc) # effective size
+> HPDinterval(osteo.mcmc) # HPD intervals of all parameters
+▷ Step 13: Other functions: convergence tests
+> gelman.diag(osteo.mcmc)
+> gelman.plot(osteo.mcmc,ask=FALSE)
+> geweke.diag(osteo.mcmc)
+> geweke.plot(osteo.mcmc,ask=FALSE)
