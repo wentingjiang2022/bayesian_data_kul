@@ -1,13 +1,8 @@
-Sys.setenv(JAGS_HOME="C:/Program Files/JAGS/JAGS-4.3.1")
-
 library(HDInterval)
 library(rjags)
 library(coda)
 library(readr)
 library(runjags)
-
-setwd("C:/Users/LENOVO/Desktop/iskola stuff/mester stuff/Concepts of Bayesian Data Analysis/Assignment")
-
 
 
 #### 2.3 simple model ####
