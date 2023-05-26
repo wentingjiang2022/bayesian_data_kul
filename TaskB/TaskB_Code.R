@@ -1,12 +1,9 @@
-Sys.setenv(JAGS_HOME="C:/Program Files/JAGS/JAGS-4.3.1")
-
 library(HDInterval)
 library(rjags)
 library(coda)
 library(readr)
 library(runjags)
 
-setwd("C:/Users/LENOVO/Desktop/iskola stuff/mester stuff/Concepts of Bayesian Data Analysis/Assignment")
 
 #### 2.3 simple model (Question 1-2) ####
 ophtalmology <- read_csv("ophtalmology.txt")
@@ -309,5 +306,5 @@ for (j in 1:N_new) {
 # Output posterior probabilities
 posterior_probs
 
-# Number of participants who have a high posterior probability that they took serum-lutein capsules
+# Number of participants who have a high posterior probability that they took no serum-lutein capsules
 sum(posterior_probs > 0.8)
