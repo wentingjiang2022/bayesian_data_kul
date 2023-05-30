@@ -274,7 +274,7 @@ for (j in 1:N_new) {
 posterior_probs
 
 # Histogram of these posterior predictive probabilities - a) sub-question
-hist(posterior_probs)
+hist(posterior_probs, main = 'Postrior predictive probabilities of lutein levels greater than 5', xlab = 'Probability')
 
 # b) sub-question
 # Number of participants who have a high posterior probability that they took serum-lutein capsules
