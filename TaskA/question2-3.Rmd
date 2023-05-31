@@ -23,41 +23,17 @@ library("HDInterval")
 ```
 
 
-```{r q2_plot_density}
-
-# seemns there is something wrong with the plot
-theta<-seq(0,1,0.01)
-alpha<-1
-beta<-1
-s <- 171
-n <- 3264
-
-likelihood<-dbeta(theta, s+1, n-s+1)
-prior<-dbeta(theta, alpha, beta)
-posterior<-dbeta(theta, alpha+s, beta+n-s)
-plot(theta, likelihood, col="blue")
-lines(theta, prior, col="red")
-lines(theta, posterior)
-```
 
 ```{r q2_theta_plus}
 alpha_plus <- 172
 beta_plus <- 3265
 confidence_level <- 0.95
 
-# Calculate the median using the qbeta function
-median <- qbeta(0.5, alpha_plus, beta_plus)
-
-print(paste("Median:", median))
+# Median
+median_plus <- qbeta(0.5, alpha_plus, beta_plus)
 
 ## EQUAL TAIL CI
-equal_tail <- c(qbeta(0.025,alpha_plus,beta_plus),qbeta(0.975,alpha_plus,beta_plus))
-
-# Calculate the proportion
-p <- alpha_plus / (alpha_plus + beta_plus)
-
-# Calculate the total number of observations
-n <- alpha_plus + beta_plus
+equal_tail_plus <- c(qbeta(0.025,alpha_plus,beta_plus),qbeta(0.975,alpha_plus,beta_plus))
 
 ## HPD CI
 hpdbeta <- function(alpha,beta)
@@ -72,66 +48,37 @@ hpdmin <- optimize(f,lower=0,upper=qbeta(0.05,p2,q2),p=p2,q=q2)$minimum
 hpdmax <- qbeta(pbeta(hpdmin,p2,q2)+0.95,p2,q2)
 return(c(hpdmin,hpdmax))
 }
-
-hpd_interval<-hpdbeta(alpha_plus,beta_plus)
-
-
+hpd_interval_plus<-hpdbeta(alpha_plus,beta_plus)
 ```
 
 ```{r q2_theta_minus}
-alpha_plus <- 118
-beta_plus <- 4321
+alpha_minus <- 118
+beta_minus <- 4321
 confidence_level <- 0.95
 
-# Calculate the median using the qbeta function
-median <- qbeta(0.5, alpha_plus, beta_plus)
-print(paste("Median:", median))
+# Median 
+median_minus <- qbeta(0.5, alpha_minus, beta_minus)
 
 ## EQUAL TAIL CI
-equal_tail <- c(qbeta(0.025,alpha_plus,beta_plus),qbeta(0.975,alpha_plus,beta_plus))
-
+equal_tail_minus <- c(qbeta(0.025,alpha_minus, beta_minus),qbeta(0.975,alpha_minus, beta_minus))
 
 ## HPD CI
-hpdbeta <- function(alpha,beta)
-{
-p2 <- alpha
-q2 <- beta
-
-f <- function(x,p=p2,q=q2){
-b<-qbeta(pbeta(x,p,q)+0.95,p,q);(dbeta(x,p,q)-dbeta(b,p,q))^2}
-
-hpdmin <- optimize(f,lower=0,upper=qbeta(0.05,p2,q2),p=p2,q=q2)$minimum
-hpdmax <- qbeta(pbeta(hpdmin,p2,q2)+0.95,p2,q2)
-return(c(hpdmin,hpdmax))
-}
-
-hpd_interval<-hpdbeta(alpha_plus,beta_plus)
-
-# Calculate the proportion
-p <- alpha_plus / (alpha_plus + beta_plus)
-
-# Calculate the total number of observations
-n <- alpha_plus + beta_plus
+hpd_interval_minus<-hpdbeta(alpha_minus, beta_minus)
 
 ```
 
 
 ```{r generate_samples_q3}
-# Set the number of samples you want to generate
 num_samples <- 5000
-
-# Create empty vectors to store the samples
 theta_plus_samples <- numeric(num_samples)
 theta_minus_samples <- numeric(num_samples)
 relative_risk_samples <- numeric(num_samples)
 
-# Set the shape parameters of the beta distributions
 alpha_plus <- 172
 beta_plus <- 3265
 alpha_minus <- 118
 beta_minus <- 4321
 
-# Generate the samples
 for (i in 1:num_samples) {
   theta_plus <- rbeta(1, alpha_plus, beta_plus)
   theta_minus <- rbeta(1, alpha_minus, beta_minus)
@@ -141,153 +88,31 @@ for (i in 1:num_samples) {
   relative_risk_samples[i] <- theta_plus / theta_minus
 }
 
+par(mfrow = c(1, 3))
+hist(theta_plus_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
+hist(theta_minus_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
+hist(relative_risk_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
 ```
 
 
 ```{r get_summary_q3}
-# Calculate summary measures and confidence interval for relative risk
 mean_rr <- mean(relative_risk_samples)
 mode_rr <- get_mode(relative_risk_samples)
 var_rr <- var(relative_risk_samples)
-#confidence_interval_rr <- t.test(relative_risk_samples)$conf.int
+confidence_interval_rr <-quantile(relative_risk_samples, probs = c(0.025,0.50,0.975), na.rm = F)
+hdi_rr<-hdi(relative_risk_samples)
 
-confidence_interval_rr_check <-quantile(relative_risk_samples, probs = c(0.025,0.50,0.975), na.rm = F)
-
-hdi<-hdi(relative_risk_samples)
-
-# Calculate summary measures and confidence interval for theta_plus
 mean_tp <- mean(theta_plus_samples)
 mode_tp <- get_mode(theta_plus_samples)
 var_tp <- var(theta_plus_samples)
-confidence_interval_rr_check <-quantile(theta_plus_samples, probs = c(0.025,0.50,0.975), na.rm = F)
-hdi<-hdi(theta_plus_samples)
+confidence_interval_tp <-quantile(theta_plus_samples, probs = c(0.025,0.50,0.975), na.rm = F)
+hdi_tp<-hdi(theta_plus_samples)
 
-
-
-# Calculate summary measures and confidence interval for theta_minus
 mean_tm <- mean(theta_minus_samples)
 mode_tm <- get_mode(theta_minus_samples)
 var_tm <- var(theta_minus_samples)
-#confidence_interval_tm <- t.test(theta_minus_samples)$conf.int
-confidence_interval_rr_check <-quantile(theta_minus_samples, probs = c(0.025,0.50,0.975), na.rm = F)
-hdi<-hdi(theta_minus_samples)
-
-
-# Print the results
-print("Relative Risk Summary Measures:")
-print(paste("Mean:", mean_rr))
-print(paste("Mode:", mode_rr))
-print(paste("Variance:", var_rr))
-#print(paste("Confidence Interval (95%) for Relative Risk:", confidence_interval_rr))
-#print(paste("Check Confidence Interval (95%) for Relative Risk:", confidence_interval_rr_check))
-
-print("")
-
-print("Theta Plus Summary Measures:")
-print(paste("Mean:", mean_tp))
-print(paste("Mode:", mode_tp))
-print(paste("Variance:", var_tp))
-#print(paste("Confidence Interval (95%) for Theta Plus:", confidence_interval_tp))
-print("")
-
-print("Theta Minus Summary Measures:")
-print(paste("Mean:", mean_tm))
-print(paste("Mode:", mode_tm))
-print(paste("Variance:", var_tm))
-#print(paste("Confidence Interval (95%) for Theta Minus:", confidence_interval_tm))
-print("")
-
-# Create a 1x3 grid of histograms
-par(mfrow = c(1, 3))
-
-# Create a histogram for theta_plus
-hist(theta_plus_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
-
-# Create a histogram for theta_minus
-hist(theta_minus_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
-
-# Create a histogram for relative risk
-hist(relative_risk_samples, breaks = 30, col = "lightblue", xlab = "", main = "")
-
-# Reset the plotting layout
-par(mfrow = c(1, 1))
+confidence_interval_tm <-quantile(theta_minus_samples, probs = c(0.025,0.50,0.975), na.rm = F)
+hdi_tm<-hdi(theta_minus_samples)
 
 ```
 
-Run the MCMC chain
-
-```{r}
-
-# Define the data
-ys <- 171
-yn <- 117
-n1 <- 3435
-n2 <- 4437
-
-# Define the Nimble model
-code <- nimbleCode({
-  # Posterior for theta_plus and theta_minus
-  theta_plus ~ dbeta(172, 3265)
-  theta_minus ~ dbeta(118, 4321)
-  
-  # Calculate the relative risk
-  rr <- theta_plus / theta_minus
-})
-
-model <- nimbleModel(code)#, data = list(ys = ys, yn = yn, n1 = n1, n2 = n2))
-
-# Compile the model
-compiled_model <- compileNimble(model)
-
-# Set the parameters to monitor
-parameters <- c("theta_plus", "theta_minus", "rr")
-
-# Run the MCMC algorithm
-osteo.sim <- nimbleMCMC(code = compiled_model,
-                        monitors = parameters,
-                        niter = 1500,
-                        nburnin = 750,
-                        nchains = 3,
-                        thin = 1,
-                        samplesAsCodaMCMC = TRUE)
-
-# Summarize the posterior distribution
-print(summary(osteo.sim))
-
-```
-Produce general summary of obtained MCMC sampling
-
-```{r}
-print(osteo.sim)
-plot(osteo.sim)
-```
-Step 10: Convert osteo.sim into mcmc.list for processing with CODA
-
-```{r}
-osteo.mcmc <- as.mcmc.list(osteo.sim)
-```
-
-Step 11: Produce general summary of obtained MCMC sampling
-
-```{r}
-plot(osteo.mcmc)
-summary(osteo.mcmc)
-```
-
-Skip Step 12-13 in her slides:
-
-▷ Step 12: Specific output obtained from CODA functions
-> par(mfrow=c(2,2)) # plot figures in 2x2 format if function allows
-> traceplot(osteo.mcmc) # trace plots
-> cumuplot(osteo.mcmc,ask=FALSE) # running mean plots
-> acfplot(osteo.mcmc) # autocorrelation function plot
-> autocorr(osteo.mcmc) # autocorrelation values
-> crosscorr.plot(osteo.mcmc) # cross-correlation output
-> densplot(osteo.mcmc) # density plots of the marginal posteriors
-> effectiveSize(osteo.mcmc) # effective size
-> HPDinterval(osteo.mcmc) # HPD intervals of all parameters
-▷ Step 13: Other functions: convergence tests
-> gelman.diag(osteo.mcmc)
-> gelman.plot(osteo.mcmc,ask=FALSE)
-> geweke.diag(osteo.mcmc)
-> geweke.plot(osteo.mcmc,ask=FALSE)
