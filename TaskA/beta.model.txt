@@ -1,0 +1,9 @@
+model
+{
+y_s ~ dbin(theta_plus, n_s)
+y_n ~ dbin(theta_minus, n_n)
+theta_plus ~ dbeta(a,b)
+theta_minus ~ dbeta(a,b)
+theta_rr <- theta_plus/theta_minus
+theta_ar <- (theta_rr-1)/theta_rr
+}

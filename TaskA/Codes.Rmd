@@ -13,6 +13,7 @@ Step 1: install and load the packages
 #install.packages("readr")
 #install.packages("nimble")
 #install.packages("HDInterval")
+#install.packages("rjags")
 
 
 library("R2OpenBUGS")
@@ -20,6 +21,7 @@ library("coda")
 library("readr")
 library("nimble")
 library("HDInterval")
+library("rjags")
 ```
 
 
@@ -116,3 +118,58 @@ hdi_tm<-hdi(theta_minus_samples)
 
 ```
 
+```{r mcmc}
+cat("model
+{
+y_s ~ dbin(theta_plus, n_s)
+y_n ~ dbin(theta_minus, n_n)
+theta_plus ~ dbeta(a,b)
+theta_minus ~ dbeta(a,b)
+theta_rr <- theta_plus/theta_minus
+theta_ar <- (theta_rr-1)/theta_rr
+}", file="beta.model.txt")
+
+```
+
+```{r mcmc_2}
+
+#file.show("beta.model.txt")
+#prepare data
+ys <- 171
+ns <- 3435
+yn <- 117
+nn <- 4437
+model.data <- list(n_s=ns,y_s=ys,n_n = nn, y_n = yn, a=1,b=1)
+#prepare initial values for 3 chains
+model.inits <- list(theta_plus=0.5,theta_minus=0.5)
+#collect parameters
+parameters <- c("theta_plus", "theta_minus", "theta_rr", "theta_ar")
+
+#run MCMC
+jags <- jags.model('beta.model.txt’,
+data = model.data,
+inits = model.inits,
+n.chains = 1)
+out <- coda.samples(jags,
+variable.names = parameters,
+n.iter=10000, thin=1)
+# Posterior summary statistics
+burnin <- 2000
+out.mcmc <- as.mcmc.list(out, start = burnin)
+plot(out.mcmc)
+summary(out.mcmc)
+par(mfrow=c(2,2))
+traceplot(out.mcmc)
+acfplot(out.mcmc)
+autocorr(out.mcmc)
+crosscorr.plot(out.mcmc)
+densplot(out.mcmc)
+effectiveSize(out.mcmc)
+HPDinterval(out.mcmc)
+
+#convergence tests
+gelman.diag(out.mcmc)
+gelman.plot(out.mcmc,ask=FALSE)
+geweke.diag(out_nb.mcmc)
+geweke.plot(out_nb.mcmc,ask=FALSE)
+```
